@@ -27,3 +27,29 @@ jobs:
 
       - name: Lint YAML files
         run: yamllint k8s/
+
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: build-and-lint
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Trivy - Scan des dependances (filesystem)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          severity: 'LOW,MEDIUM,HIGH,CRITICAL'
+
+      - name: Build Docker image
+        run: docker build -t flask-api:latest .
+
+      - name: Trivy - Scan de l image Docker
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'flask-api:latest'
+          format: 'table'
+          severity: 'LOW,MEDIUM,HIGH,CRITICAL'
